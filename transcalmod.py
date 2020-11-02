@@ -141,7 +141,7 @@ class Fin_1D_Model():
         elif position < 0:
             print("The model doesn't supports negative positions.")
         else:
-            return self.k*self.A*self.T_sol.diff(self.x,2).subs({self.x:position})
+            return self.k*self.A*self.T_sol.diff(self.x).subs({self.x:position})
 
     def get_temperature(self, position=0):
         """
