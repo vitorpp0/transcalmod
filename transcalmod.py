@@ -167,8 +167,8 @@ class Fin_1D_Model():
         elif position == 0:
             return self.k*self.A*self.T_sol.diff(self.x).subs({self.x:position})
         else:
-            heat_transfer = self.h*self.p*(self.T_inf-T_sol)
-            return integrate(heat_transfer, (x, 0, position))
+            heat_transfer = self.h*self.p*(self.T_inf-self.T_sol)
+            return integrate(heat_transfer, (self.x, 0, position))
             
 
     def get_temperature(self, position=0):
