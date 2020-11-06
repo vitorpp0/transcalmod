@@ -1,6 +1,32 @@
-from matplotlib import pyplot as plt
-import numpy as np 
-import sympy as sp
+from matplotlib.pyplot import draw, figure
+from numpy import pi, log, arange
+from sympy import symbols, Function, dsolve, solve, integrate, lambdify
+
+def thermal_resistance_1D(resistance_list, suppress=False):
+    resistances = {}
+    for resistance in resistance_list:
+        resistance_value = _thermal_resistance_1D_calculations(*resistance_list[resistance])
+        resistances[resistance] = resistance_value
+        if not suppress:
+            print('{} = {:0.4e} K/W'.format(resistance, resistance_value))
+    return resistances
+
+def _thermal_resistance_1D_calculations(mechanism, direction, area, thermal_coefficient, data):
+    if mechanism == 'contact' or mechanism == 'convection' or mechanism == 'radiation':
+        return 1/(area*thermal_coefficient)
+    elif mechanism == 'conduction':
+        if direction == 'axial':
+            return data['length']/(area*thermal_coefficient)
+        elif direction == 'cylinder_radial':
+            coeff = 1/(thermal_coefficient*data['angle']*data['length'])
+            return coeff*log(data['R_outter']/data['R_inner']) 
+        elif direction == 'sphere_radial':
+            radius_term = (data['R_outter']-data['R_inner'])/(data['R_outter']*data['R_inner'])
+            return radius_term/(4*pi*thermal_coefficient)
+        else:
+            print("This module doesn't supports this direction.")
+    else:
+        print("This module doesn't supports this mechanism.")
 
 class Fin_1D_Model():
     """
@@ -37,8 +63,8 @@ class Fin_1D_Model():
                     >> geometry_data = {..., "cross_area":"-x**3+9"}
         """
 
-        self.x = sp.symbols('x', positive=True, real=True)
-        self.T = sp.Function('T')(self.x)
+        self.x = symbols('x', positive=True, real=True)
+        self.T = Function('T')(self.x)
         
         self.k, self.h, self.T_base, self.T_inf = self._check_data(physics_data)
         self.A, self.p, self.L = self._check_data(geometry_data)
@@ -85,7 +111,7 @@ class Fin_1D_Model():
         fin_equation = (self.k*self.A*self.T.diff(self.x,2) - 
                             self.h*self.p*self.T + self.h*self.p*self.T_inf)
 
-        sol_family = sp.dsolve(fin_equation)
+        sol_family = dsolve(fin_equation)
 
         T_sol = sol_family.args[1]
 
@@ -99,7 +125,7 @@ class Fin_1D_Model():
             ]
 
         elif boundary_condition == 'infinitely_long_fin':
-            T_sol = T_sol.subs({sp.symbols('C2'):0})
+            T_sol = T_sol.subs({symbols('C2'):0})
             system_eq = [ T_sol.subs({self.x:0}) - self.T_base]
         
         elif boundary_condition == 'adiabatic_tip':
@@ -115,13 +141,13 @@ class Fin_1D_Model():
         else:
             print("This class doesn't supports this set of boundary conditions")
 
-        constants = sp.solve(system_eq)
+        constants = solve(system_eq)
 
         self.T_sol = T_sol.subs(constants)
 
         print('Model solved.')
     
-    def get_heat_transport(self, position=0):
+    def get_heat_transfer(self, position=0):
         """
             This function calculates the heat transfer in any point
             of the fin.
@@ -136,12 +162,14 @@ class Fin_1D_Model():
                 The heat tranfer in W.
         """
 
-        if position > self.L:
-            print("There is no Fin here. The Fin has a length of {}m".format(self.length))
-        elif position < 0:
-            print("The model doesn't supports negative positions.")
-        else:
+        if position > self.L or position < 0:
+            print("Position out of the Fin")
+        elif position == 0:
             return self.k*self.A*self.T_sol.diff(self.x).subs({self.x:position})
+        else:
+            heat_transfer = self.h*self.p*(self.T_inf-T_sol)
+            return integrate(heat_transfer, (x, 0, position))
+            
 
     def get_temperature(self, position=0):
         """
@@ -169,12 +197,12 @@ class Fin_1D_Model():
         """
             Plots the Fin's temperature distribution along the x axis
         """
-        fig = plt.figure()
+        fig = figure()
         ax = fig.add_subplot(111)
 
-        position = np.arange(0, self.L, self.L/1000)
-        y = sp.lambdify(self.x, self.T_sol, 'numpy')
+        position = arange(0, self.L, self.L/1000)
+        y = lambdify(self.x, self.T_sol, 'numpy')
 
         ax.plot(position, y(position), label='Temperature Profile')
 
-        plt.draw()
+        draw()
