@@ -69,4 +69,4 @@ This class makes use of some Python's modules [Numpy](https://numpy.org/), [MatP
 
 ## End
 Hope you like it! :grin:
-Please, consider hiting the star button!!!
+Please, consider hitting the star button!!!
