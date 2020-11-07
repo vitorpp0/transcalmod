@@ -2,10 +2,58 @@ from matplotlib.pyplot import draw, figure
 from numpy import pi, log, arange
 from sympy import symbols, Function, dsolve, solve, integrate, lambdify
 
-def thermal_resistance_1D(resistance_list, suppress=False):
+def thermal_resistance_1D(resistance_dic, suppress=False):
+    """     
+        Calculates each thermal resistance described in the resistance_dic
+
+        Parameters
+        ----------
+        resistance_dic: dictionary
+            A dictionary that must contain as key the resistance id given by the user
+            and as values lists of 5 elements. See the example below:
+            
+            Example: 
+                >> example_resistance_dic = {
+                    'R_id' = [mechanism, direction, area, thermal_coefficient, data],
+                    'R_id2' = [mechanism, direction, area, thermal_coefficient, data],
+                    ...
+                }
+
+            Values description:
+            - mechanism: string
+                The heat transport mechanism, this module supports:
+                'contact', 'convection', 'radiation' and 'conduction'
+            
+            - direction: string
+                If the mechanism is 'conduction', it can be:
+                'axial', 'cylinder_radial' or 'sphere_radial'
+                if the mechanism is other then 'conduction' it 
+                can be filled with ''.
+
+            - thermal_coefficient: float
+                The thermal coefficient (k, h, h_rad or h_c) in SI
+            
+            - data: dictionary
+                A dictionary that contains the specific informations 
+                of each 'conduction' mechanism configuration. If the mechanism
+                is other then 'condution', it can be a empty dictionary {}.
+
+                For: 'direction'                'data'
+                     'axial'                    {'length'}
+                     'cylinder_radial'          {'angle','length','R_inner', 'R_outter'}
+                     'sphere_radial'            {'R_inner', 'R_outter'}
+            
+        suppress: boolean, Deafult: False
+            If True the function wont print the resistances values to the console
+            when called.
+        
+        ------
+        return
+            A dictionary containing the resistances ids as keys and its values [K/W].
+        """
     resistances = {}
-    for resistance in resistance_list:
-        resistance_value = _thermal_resistance_1D_calculations(*resistance_list[resistance])
+    for resistance in resistance_dic:
+        resistance_value = _thermal_resistance_1D_calculations(*resistance_dic[resistance])
         resistances[resistance] = resistance_value
         if not suppress:
             print('{} = {:0.4e} K/W'.format(resistance, resistance_value))
@@ -51,7 +99,7 @@ class Fin_1D_Model():
                 a function inside a string just as:
                     >> physics_data = {..., "k":"x**2+7"}
 
-            physics_data: dictionary
+            geometry_data: dictionary
                 A dictionary that must contain the keys below:
                 
                 - "cross_area" : Fin's cross section area [m²];
