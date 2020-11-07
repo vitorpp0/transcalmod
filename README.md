@@ -1,5 +1,5 @@
 # transcalmod
-A heat and mass transport module. Where in construction!! 🚧👷🚧  
+A heat and mass transport module. We're in construction!! 🚧👷🚧  
 
 ## Requirements
 This class makes use of some Python's modules [Numpy](https://numpy.org/), [MatPlotLib](https://matplotlib.org/) and [Sympy](https://www.sympy.org).
